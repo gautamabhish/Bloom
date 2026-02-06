@@ -57,6 +57,7 @@ const loginUser = asyncHandler(async (req, res) => {
   }
 
   const token = generateToken();
+  console.log("Generated verification token:", token); // Debugging log
 
   await prisma.emailVerification.upsert({
     where: { userId: user.id },
@@ -106,6 +107,7 @@ const verifyEmail = asyncHandler(async (req, res) => {
   });
 
   const jwtToken = generateJWT(updatedUser);
+  console.log("Generated JWT:", jwtToken); // Debugging log
   const options = {
     httpOnly: true,
     secure: true,
@@ -115,7 +117,8 @@ const verifyEmail = asyncHandler(async (req, res) => {
 
   res
     .cookie("token", jwtToken, options)
-    .redirect(`${process.env.CORS_ORIGIN}/login/me`);
+    .status(200)
+    .json(new ApiResponse(200, "Email verified successfully"));
 });
 
 export { loginUser, verifyEmail };
