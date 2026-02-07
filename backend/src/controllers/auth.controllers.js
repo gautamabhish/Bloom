@@ -76,7 +76,9 @@ const loginUser = asyncHandler(async (req, res) => {
     subject: "Ignite the spark: Your Blush Login Link",
     verificationUrl: `${req.protocol}://${req.get("host")}/api/auth/verify-email/${token}`,
   });
-
+  console.log(
+    `${req.protocol}://${req.get("host")}/api/auth/verify-email/${token}`, //DEBUGGING LOG
+  );
   res.status(200).json(new ApiResponse(200, "Login email sent successfully"));
 });
 
@@ -108,14 +110,11 @@ const verifyEmail = asyncHandler(async (req, res) => {
   const jwtToken = generateJWT(updatedUser);
   const options = {
     httpOnly: true,
-    secure: true,
-    sameSite: "none",
     maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
   };
-
   res
     .cookie("token", jwtToken, options)
-    .redirect(302, `${process.env.CLIENT_URL}/login/me`);
+    .redirect(302, `${process.env.CORS_ORIGIN}/login/me`);
 });
 const getMe = asyncHandler(async (req, res) => {
   const token = req.cookies.token;
@@ -141,4 +140,4 @@ const getMe = asyncHandler(async (req, res) => {
   res.status(200).json(user);
 });
 
-export { loginUser, verifyEmail ,getMe };
+export { loginUser, verifyEmail, getMe };
