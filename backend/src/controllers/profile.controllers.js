@@ -66,7 +66,7 @@ const submitAnswersAndGenerateProfile = asyncHandler(async (req, res) => {
     responses: normalizedAnswers,
   }
   console.log("Sending data to external service:", data);
-  axios.post("http://10.104.11.210:6969/user/register", data, {
+  axios.post("https://bloom-nsrj.onrender.com/user/register", data, {
     timeout: 5000,
   }).catch(err => {
     console.error("External service error:", err.message);

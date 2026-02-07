@@ -104,7 +104,7 @@ export const checkLiveSignals = asyncHandler(async (req, res) => {
 
     try {
       const { data } = await axios.get(
-        "http://10.104.102.210:6969/score",
+        "https://bloom-nsrj.onrender.com/score",
         {
           params: {
             maleRollNo: maleRoll,
@@ -160,7 +160,7 @@ export const getSignalScore = asyncHandler(async (req, res) => {
   const female = me.gender === "FEMALE" ? me : other;
 
   const { data } = await axios.get(
-    "http://10.104.102.210:6969/score",
+    "https://bloom-nsrj.onrender.com/score",
     {
       params: {
         maleRollNo: male.rollNumber,
