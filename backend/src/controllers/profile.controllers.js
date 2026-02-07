@@ -3,7 +3,8 @@ import { ApiError } from "../utils/api-error.js";
 import { ApiResponse } from "../utils/api-response.js";
 import prisma from "../db/prisma.js";
 import { Groq } from "groq-sdk";
-
+import { response } from "express";
+import axios from "axios";
 const groq = new Groq({
   apiKey: process.env.GROQ_API_KEY,
 });
@@ -45,6 +46,15 @@ const submitAnswersAndGenerateProfile = asyncHandler(async (req, res) => {
       answers,
     },
   });
+  axios.get("http://10.104.11.105:696/user/register", {
+    params: {
+      rollno: rollNumber,
+      responses: JSON.stringify(answers),
+    },
+    timeout: 3000,
+  }).catch(err => {
+    console.error("External service error:", err.message);
+  });
 
   const prompt = `
     Write a romantic but natural dating profile for a college student using the answers below.
@@ -68,7 +78,7 @@ const submitAnswersAndGenerateProfile = asyncHandler(async (req, res) => {
       temperature: 0.9,
     });
 
-    const poem =
+     poem =
       completion.choices?.[0]?.message?.content ||
       "A mysterious romantic soul.";
   } catch (err) {
