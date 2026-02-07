@@ -27,6 +27,7 @@ const WhisperInput = ({ value, onChange, placeholder }) => {
           font-lora
           text-sm
           text-[#4a2c2a]
+          text-center
           placeholder:italic
           placeholder:text-center
           outline-none
@@ -36,9 +37,7 @@ const WhisperInput = ({ value, onChange, placeholder }) => {
           focus:ring-2
           focus:ring-[#af323f]/40
         "
-        style={{
-          textAlign: value ? "left" : "center",
-        }}
+    
       />
     </div>
   );
@@ -99,28 +98,39 @@ const questions = [
 
 const GenerateProfile = () => {
   const [step, setStep] = useState(0);
-  const [answers, setAnswers] = useState({});
+const [answers, setAnswers] = useState(Array(questions.length).fill(""));
   const [revealed, setRevealed] = useState(false);
     const [username, setUsername] = useState("CHineseBard");
   const current = questions[step];
 
-  const handleNext = async() => {
-    if (!answers[current.id]) return;
-    if (step === questions.length - 1) {
-      // submit profile and reveal
-      const profileData = await generateProfile(Object.entries(answers).map(([id, answer]) => ({ id, answer })))
-        .then((data) => {
-          setUsername(data.username);
-          setRevealed(true);
-        })
-        .catch((err) => {
-          console.error("Error generating profile:", err);
-          alert("Something went wrong. Please try again.");
-        });
-    } else {
-      setStep(step + 1);
+  const handleAnswer = (value) => {
+  const updated = [...answers];
+  updated[step] = value;
+  setAnswers(updated);
+};
+
+const handleNext = async () => {
+  if (!answers[step]) return;
+
+  if (step === questions.length - 1) {
+    try {
+const payload = {
+  answers: answers.map(a => ({ answer: a }))
+};
+
+
+      const data = await generateProfile(payload);
+      setUsername(data.username);
+      setRevealed(true);
+    } catch (err) {
+      console.error("Error generating profile:", err);
+      alert("Something went wrong. Please try again.");
     }
-  };
+  } else {
+    setStep(step + 1);
+  }
+};
+
 
   return (
     <div className="min-h-screen  bg-gradient-to-b
@@ -139,13 +149,29 @@ const GenerateProfile = () => {
             {current.question}
           </h2>
 
-       <WhisperInput
-  placeholder={current.placeholder}
-  value={answers[current.id] || ""}
-  onChange={(val) =>
-    setAnswers({ ...answers, [current.id]: val })
-  }
-/>
+{current.id === "5" ? (
+  <div className="flex gap-4 justify-center">
+    {["Male", "Female"].map(g => (
+      <button
+        key={g}
+        onClick={() => handleAnswer(g)}
+        className={`px-5 py-2 rounded-full ${
+          answers[step] === g ? "bg-[#af323f] text-white" : "bg-white"
+        }`}
+      >
+        {g}
+      </button>
+    ))}
+  </div>
+) : (
+  <WhisperInput
+    placeholder={current.placeholder}
+    value={answers[step]}
+    onChange={(val) => handleAnswer(val)}
+  />
+)}
+
+
 
 
           <button
@@ -222,7 +248,7 @@ const GenerateProfile = () => {
             paddingBottom: "2px",
           }}
         >
-          {answers[q.id]}
+{answers[Number(q.id) - 1]}
         </p>
       </div>
     ))}

@@ -13,7 +13,7 @@ const ProtectedRoute = ({ children }) => {
   const { user, loading } = useAuth();
 
   if (loading) return null; // or loader
-  return user ? children : children;
+  return user ? children : <Login />;
 };
 
 
