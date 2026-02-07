@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import scroll_bg from "../assets/paper_g.png";
 import multi_heart from "../assets/multi_heart.png";
+import { generateProfile } from "../api/generate";
 const WhisperInput = ({ value, onChange, placeholder }) => {
   return (
     <div className="relative">
@@ -45,47 +46,52 @@ const WhisperInput = ({ value, onChange, placeholder }) => {
 
 const questions = [
   {
-    id: 1,
+    id: "1",
     question: "What makes you feel most alive these days?",
     placeholder: "Late-night study sessions, music, long walks…",
   },
   {
-    id: 2,
+    id: "2",
     question: "If you had a free evening with no responsibilities, how would you spend it?",
     placeholder: "Quiet night in, friends, creating something…",
   },
   {
-    id: 3,
+    id: "3",
     question: "What small thing can instantly brighten your day?",
     placeholder: "A message, a song, coffee, laughter…",
   },
   {
-    id: 4,
+    id: "4",
     question: "Which three words would your closest friend use to describe you?",
     placeholder: "And why one of them fits you",
   },
   {
-    id: 5,
+    id:"5", 
+    question:"Select your gender to help us find the right matches for you",
+    placeholder: "Male",
+  },
+  {
+    id: "6",
     question: "What are you secretly hoping college gives you before graduation?",
     placeholder: "Confidence, love, clarity, memories…",
   },
   {
-    id: 6,
+    id: "7",
     question: "What do you value most in relationships?",
     placeholder: "Trust, friendship, loyalty, fun…",
   },
   {
-    id: 7,
+    id: "8",
     question: "How do you usually show care or affection?",
     placeholder: "Words, time, gestures, presence…",
   },
   {
-    id: 8,
+    id: "9",
     question: "What kind of person naturally catches your attention?",
     placeholder: "Calm, curious, expressive, thoughtful…",
   },
   {
-    id: 9,
+    id: "10",
     question: "If someone wrote a short poem about you after meeting once, what would its mood be?",
     placeholder: "Playful, calm, mysterious, dreamy…",
   },
@@ -94,14 +100,23 @@ const questions = [
 const GenerateProfile = () => {
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState({});
-  const [revealed, setRevealed] = useState(true);
+  const [revealed, setRevealed] = useState(false);
     const [username, setUsername] = useState("CHineseBard");
   const current = questions[step];
 
-  const handleNext = () => {
+  const handleNext = async() => {
     if (!answers[current.id]) return;
     if (step === questions.length - 1) {
-      setTimeout(() => setRevealed(true), 800);
+      // submit profile and reveal
+      const profileData = await generateProfile(Object.entries(answers).map(([id, answer]) => ({ id, answer })))
+        .then((data) => {
+          setUsername(data.username);
+          setRevealed(true);
+        })
+        .catch((err) => {
+          console.error("Error generating profile:", err);
+          alert("Something went wrong. Please try again.");
+        });
     } else {
       setStep(step + 1);
     }

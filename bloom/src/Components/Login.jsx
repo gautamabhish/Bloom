@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import login_balloon from "../assets/login_balloon.png";
 import heart_pattern from "../assets/heart_pattern.png";
 import { Heart } from "lucide-react";
-import {login} from "../api/login";
+import { requestMagicLink} from "../api/login";
 
 const Login = () => {
   const [showForm, setShowForm] = useState(false);
@@ -30,7 +30,7 @@ const Login = () => {
     try {
       setError("");
       setLoading(true);
-      await login(email); // your API call
+      await requestMagicLink(email); // your API call
       // success flow handled by backend / navigation
     } catch (err) {
       setError("Something went wrong. Please try again.");

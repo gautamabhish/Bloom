@@ -3,17 +3,71 @@ import { Bell, X } from "lucide-react";
 import multi_heart from "../assets/multi_heart.png";
 import red_heart from "../assets/red_heart.png";
 import physics_balloon from "../assets/physics_balloon.png";
-/* ---------------- FEED CARD ---------------- */
 
-const FeedCard = ({ username, avatar, profileID, text }) => {
+/* ---------- helpers ---------- */
+
+const truncateWords = (text, limit = 80) => {
+  const words = text.split(" ");
+  return words.length <= limit
+    ? text
+    : words.slice(0, limit).join(" ") + "…";
+};
+
+/* ---------- feed card ---------- */
+
+const FeedCard = ({ item, onExpand }) => {
+  const [startX, setStartX] = useState(null);
+  const [deltaX, setDeltaX] = useState(0);
+  const [isSwiping, setIsSwiping] = useState(false);
+
+  const SWIPE_INTENT = 12; // px
+  const SWIPE_ACTION = 90; // px
+
+  const onTouchStart = (e) => {
+    setStartX(e.touches[0].clientX);
+    setIsSwiping(false);
+  };
+
+  const onTouchMove = (e) => {
+    if (startX === null) return;
+
+    const moveX = e.touches[0].clientX - startX;
+
+    if (!isSwiping && Math.abs(moveX) > SWIPE_INTENT) {
+      setIsSwiping(true); // lock intent as swipe
+    }
+
+    if (isSwiping) {
+      setDeltaX(moveX);
+    }
+  };
+
+  const onTouchEnd = () => {
+    if (isSwiping) {
+      if (deltaX > SWIPE_ACTION) {
+        alert("✅ ACCEPT: " + item.profileID);
+      } else if (deltaX < -SWIPE_ACTION) {
+        alert("❌ REJECT: " + item.profileID);
+      }
+    } else {
+      onExpand(item);
+    }
+
+    setDeltaX(0);
+    setStartX(null);
+    setIsSwiping(false);
+  };
+
   return (
     <div
+      onTouchStart={onTouchStart}
+      onTouchMove={onTouchMove}
+      onTouchEnd={onTouchEnd}
       className="
         paper
         max-w-xl
         w-full
         mt-6
-        min-h-98
         mb-6
         px-12
         py-8
@@ -22,266 +76,150 @@ const FeedCard = ({ username, avatar, profileID, text }) => {
         shadow-lg
       "
       style={{
+        transform: `translateX(${deltaX}px)`,
+        transition: isSwiping ? "none" : "transform 0.25s ease",
         backgroundImage: `
           radial-gradient(
             ellipse at center,
             rgba(255,248,237,0.85) 0%,
-            rgba(255,248,237,0.75) 55%,
-            rgba(255,248,237,0.55) 75%,
+            rgba(255,248,237,0.65) 75%,
             rgba(255,248,237,0.35) 100%
-          ),
-          linear-gradient(
-            to bottom,
-            rgba(255,248,237,0.65),
-            rgba(243,227,205,0.65)
           ),
           url(${multi_heart})
         `,
-        backgroundSize: "cover, cover, 220px",
-        backgroundPosition: "center, center, center",
-        backgroundRepeat: "no-repeat, no-repeat, repeat",
+        backgroundSize: "cover, 220px",
+        backgroundRepeat: "no-repeat, repeat",
       }}
     >
-      {/* USERNAME */}
       <h2 className="text-center text-2xl font-playfair italic text-[#5b2a2a] mb-6">
-        {username}
+        {item.username}
       </h2>
 
-      {/* TEXT */}
-      <p
-        className="font-lora italic text-sm text-[#4a2c2a] leading-relaxed"
-        style={{
-          backgroundImage:
-            "linear-gradient(to right, rgba(140,48,55,0.35) 60%, rgba(140,48,55,0.12) 75%, rgba(140,48,55,0.35) 90%)",
-          backgroundPosition: "0 95%",
-          backgroundSize: "100% 1px",
-          backgroundRepeat: "no-repeat",
-          paddingBottom: "2px",
-        }}
-      >
-        {text}
+      <p className="font-lora italic text-sm text-[#4a2c2a] leading-relaxed">
+        {truncateWords(item.text)}
+      </p>
+
+      <p className="mt-4 text-center text-xs italic text-[#8c3037]/60">
+        Swipe ← / → • Tap to open
       </p>
     </div>
   );
 };
 
-/* ---------------- DASHBOARD ---------------- */
+/* ---------- dashboard ---------- */
 
 const Dashboard = () => {
+  const [expanded, setExpanded] = useState(null);
   const [showNotifications, setShowNotifications] = useState(false);
-
-  /* -------- DUMMY DATA -------- */
 
   const feedData = [
     {
       profileID: "p1",
       username: "Someone Nearby",
-      avatar: "A",
-      text: "Late-night walks, soft music, and the comfort of quiet moments.",
+      text:
+        "Late-night walks, soft music, and the comfort of quiet moments. They enjoy being present, observing the world slowly, finding meaning in silence and subtle connections that don’t demand words.",
     },
     {
       profileID: "p2",
       username: "A Familiar Presence",
-      avatar: "M",
-      text: "You share a love for calm conversations and warm coffee.",
+      text:
+        "Calm conversations over warm coffee. Someone who values emotional depth, consistency, and shared routines that feel grounding rather than overwhelming.",
     },
     {
       profileID: "p3",
       username: "A Gentle Spark",
-      avatar: "S",
-      text: "There’s a presence around you that feels reassuring and kind.",
+      text:
+        "A reassuring presence with thoughtful energy. They listen carefully, speak softly, and leave you feeling slightly lighter after every interaction.",
     },
   ];
 
-  const notifications = [
-    "A spark passed near you a few minutes ago 🌸",
-    "Someone with a familiar vibe is nearby",
-    "Your presence resonated with someone today",
-  ];
-
   return (
-    <div
-      className="
-        min-h-screen
-         bg-gradient-to-b
-        from-[#700912]
-        from-[1%]
-        via-[#c4505a]
-        from-[5%]      
-        to-[#dd908c]
-        px-6
-        py-8
-        relative
-      "
-    >
-
-{/* 🌸 AMBIENT FLOATING LAYER (FLOODED) */}
-<div className="pointer-events-none absolute inset-0 overflow-hidden z-0">
-
-  {/* ❤️ HEARTS */}
-  {[...Array(200)].map((_, i) => {
-    const size = 24 + (i % 4) * 4; // 6–18px
-    return (
-      <img
-        key={`heart-${i}`}
-        src={red_heart}
-        alt=""
-        className="absolute opacity-60"
-        style={{
-          width: `${size}px`,
-          left: `${Math.random() * 100}%`,
-          animation: `floatUp ${14 + Math.random() * 14}s linear infinite`,
-        //   animationDelay: `${Math.random() * 10}s`,
-          filter:
-            i % 3 === 0
-              ? "hue-rotate(-15deg) saturate(130%)"
-              : i % 3 === 1
-              ? "hue-rotate(10deg) brightness(1.1)"
-              : "sepia(20%) saturate(120%)",
-        }}
-      />
-    );
-  })}
-
-  {/* 🎈 BALLOONS */}
-  {[...Array(120)].map((_, i) => {
-    const size = 48 + (i % 5) * 18; // 48–108px
-    return (
-      <img
-        key={`balloon-${i}`}
-        src={physics_balloon}
-        alt=""
-        className="absolute opacity-50"
-        style={{
-          width: `${size}px`,
-          left: `${Math.random() * 100}%`,
-          animation: `drift ${20 + Math.random() * 18}s linear infinite`,
-        //   animationDelay: `${Math.random() * 12}s`,
-          filter:
-            i % 2 === 0
-              ? "sepia(25%) saturate(140%)"
-              : "hue-rotate(330deg) brightness(1.05)",
-        }}
-      />
-    );
-  })}
-</div>
-
-
-      {/* TOP BAR */}
-      <div className="flex items-center justify-around mb-8">
-        {/* AVATAR */}
-        <div className="flex items-center gap-3">
-          <div
-            className="
-              w-12
-              h-12
-              rounded-full
-              bg-[#af323f]/90
-              flex
-              items-center
-              justify-center
-              text-white
-              font-playfair
-              italic
-              shadow-lg
-            "
-          >
-            A
-          </div>
-
-          <div>
-            <p className="font-playfair italic text-[#cacaca]">
-              Hello,
-            </p>
-            <p className="font-lora text-sm text-[#cacaca]/80">
-              Your spark is live
-            </p>
-          </div>
-        </div>
-
-        {/* NOTIFICATION BUTTON */}
-        <button
-          onClick={() => setShowNotifications(true)}
-          className="
-            relative
-            p-2
-            rounded-full
-            bg-white/70
-            backdrop-blur
-            shadow
-            hover:bg-white/90
-            transition
-          "
-        >
-          <Bell size={18} className="text-[#5b2a2a]" />
-          <span className="absolute top-1 right-1 w-2 h-2 bg-[#af323f] rounded-full" />
-        </button>
-      </div>
-
-      
-
-      {/* FEED */}
-      <div className="space-y-5 flex flex-col items-center">
-        {feedData.map((item) => (
-          <FeedCard
-            key={item.profileID}
-            username={item.username}
-            avatar={item.avatar}
-            profileID={item.profileID}
-            text={item.text}
+    <div className="min-h-screen bg-gradient-to-b from-[#700912] via-[#c4505a] to-[#dd908c] px-6 py-8 relative">
+      {/* ambient */}
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+        {[...Array(30)].map((_, i) => (
+          <img
+            key={`h-${i}`}
+            src={red_heart}
+            className="absolute w-6 opacity-50"
+            style={{
+              left: `${Math.random() * 100}%`,
+              animation: `floatUp ${12 + Math.random() * 12}s linear infinite`,
+            }}
+          />
+        ))}
+        {[...Array(16)].map((_, i) => (
+          <img
+            key={`b-${i}`}
+            src={physics_balloon}
+            className="absolute w-16 opacity-40"
+            style={{
+              left: `${Math.random() * 100}%`,
+              animation: `drift ${18 + Math.random() * 18}s linear infinite`,
+            }}
           />
         ))}
       </div>
 
-      {/* ---------------- NOTIFICATION PANEL ---------------- */}
+      {/* top bar */}
+      <div className="flex justify-between items-center mb-6 relative z-10">
+        <div>
+          <p className="font-playfair italic text-[#cacaca]">Hello</p>
+          <p className="font-lora text-sm text-[#cacaca]/80">
+            Your spark is live
+          </p>
+        </div>
 
+        <button
+          onClick={() => setShowNotifications(true)}
+          className="p-2 rounded-full bg-white/70"
+        >
+          <Bell size={18} />
+        </button>
+      </div>
+
+      {/* feed */}
+      <div className="flex flex-col items-center relative z-10">
+        {feedData.map((item) => (
+          <FeedCard
+            key={item.profileID}
+            item={item}
+            onExpand={setExpanded}
+          />
+        ))}
+      </div>
+
+      {/* expanded card */}
+      {expanded && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div
+            className="absolute inset-0 bg-black/40 backdrop-blur-md"
+            onClick={() => setExpanded(null)}
+          />
+          <div className="relative z-10 max-w-xl w-[92%] paper px-12 py-8 rounded-3xl shadow-2xl">
+            <h2 className="text-center text-3xl font-playfair italic text-[#5b2a2a] mb-6">
+              {expanded.username}
+            </h2>
+            <p className="font-lora italic text-sm text-[#4a2c2a] leading-relaxed">
+              {expanded.text}
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* notifications */}
       {showNotifications && (
         <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/20 backdrop-blur-sm">
-          <div
-            className="
-              mt-6
-              w-[92%]
-              max-w-md
-              bg-white/90
-              rounded-3xl
-              px-6
-              py-6
-              shadow-2xl
-              animate-[unfurl_0.6s_ease-out]
-            "
-          >
-            {/* HEADER */}
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="font-playfair italic text-[#5b2a2a] text-lg">
-                Notifications
-              </h3>
+          <div className="mt-6 w-[92%] max-w-md bg-white/90 rounded-3xl px-6 py-6 shadow-2xl">
+            <div className="flex justify-between mb-4">
+              <h3 className="font-playfair italic">Notifications</h3>
               <button onClick={() => setShowNotifications(false)}>
-                <X size={18} className="text-[#5b2a2a]" />
+                <X size={18} />
               </button>
             </div>
-
-            {/* LIST */}
-            <div className="space-y-3">
-              {notifications.map((note, idx) => (
-                <div
-                  key={idx}
-                  className="
-                    px-4
-                    py-3
-                    rounded-xl
-                    bg-[#f9ebe6]
-                    font-lora
-                    text-sm
-                    italic
-                    text-[#4a2c2a]
-                    shadow
-                  "
-                >
-                  {note}
-                </div>
-              ))}
-            </div>
+            <p className="font-lora italic text-sm">
+              A spark passed near you 🌸
+            </p>
           </div>
         </div>
       )}
