@@ -27,7 +27,13 @@ const submitAnswersAndGenerateProfile = asyncHandler(async (req, res) => {
   if (gender !== "MALE" && gender !== "FEMALE") {
     throw new ApiError(400, "Invalid gender answer");
   }
-
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+  if (!user) {
+    throw new ApiError(404, "User not found");
+  }
+  if(user.onboardingCompleted) {
+    throw new ApiError(400, "Profile already generated");
+  }
   const submission = await prisma.onboardingSubmission.upsert({
     where: { userId },
     update: {
@@ -62,7 +68,7 @@ const submitAnswersAndGenerateProfile = asyncHandler(async (req, res) => {
       temperature: 0.9,
     });
 
-    poem =
+    const poem =
       completion.choices?.[0]?.message?.content ||
       "A mysterious romantic soul.";
   } catch (err) {
@@ -92,17 +98,13 @@ const submitAnswersAndGenerateProfile = asyncHandler(async (req, res) => {
     return [chosen];
   });
 
-  let avatar = "";
+  let avatarUrl = "";
   if (gender === "MALE") {
     const avatarNumber = Math.floor(Math.random() * 19) + 1;
-    avatar = {
-      url: `/${gender.toLowerCase()}/${avatarNumber}.png`,
-    };
+    avatarUrl = `/${gender.toLowerCase()}/${avatarNumber}.png`;
   } else {
     const avatarNumber = Math.floor(Math.random() * 12) + 1;
-    avatar = {
-      url: `/${gender.toLowerCase()}/${avatarNumber}.png`,
-    };
+    avatarUrl = `/${gender.toLowerCase()}/${avatarNumber}.png`;
   }
 
   await prisma.user.update({
@@ -110,8 +112,9 @@ const submitAnswersAndGenerateProfile = asyncHandler(async (req, res) => {
     data: {
       gender: gender,
       username: username.name,
-      avatar: avatar.url,
+      avatarUrl: avatarUrl,
       poem: poem,
+      onboardingCompleted: true,
     },
   });
 
@@ -120,7 +123,7 @@ const submitAnswersAndGenerateProfile = asyncHandler(async (req, res) => {
       poem,
       submissionId: submission.id,
       username: username.name,
-      avatar: avatar.url,
+      avatarUrl: avatarUrl,
     }),
   );
 });
@@ -135,6 +138,9 @@ const homePageContent = asyncHandler(async (req, res) => {
     verified: true,
     poem: {
       not: "",
+    },
+    id: {
+      not: req.user.id,
     },
   };
 
@@ -200,4 +206,55 @@ const homePageContent = asyncHandler(async (req, res) => {
   );
 });
 
-export { submitAnswersAndGenerateProfile, homePageContent };
+
+ const notificationsPanel = asyncHandler(async (req, res) => {
+  const userId = req.user.id;
+
+  // fetch incoming interactions (signals, likes, rejected) — recent first
+  const incoming = await prisma.userInteraction.findMany({
+    where: { toUserId: userId },
+    include: {
+      fromUser: { select: { id: true, username: true, avatarUrl: true, poem: true } },
+    },
+    orderBy: { createdAt: "desc" },
+    take: 50,
+  });
+
+  const likes = [];
+  const resonance = [];
+
+  // classify each incoming LIKED into resonance or likes (mutual)
+  for (const i of incoming) {
+    if (i.state !== "LIKED") continue;
+    // reciprocal lookup via unique composite (fromUserId_toUserId)
+    const reciprocal = await prisma.userInteraction.findUnique({
+      where: { fromUserId_toUserId: { fromUserId: userId, toUserId: i.fromUserId } },
+    });
+    if (reciprocal && reciprocal.state === "LIKED") {
+      resonance.push({
+        userId: i.fromUser.id,
+        username: i.fromUser.username,
+        avatarUrl: i.fromUser.avatarUrl,
+        poem: i.fromUser.poem,
+        matchedAt: i.updatedAt,
+      });
+    } else {
+      likes.push({
+        userId: i.fromUser.id,
+        username: i.fromUser.username,
+        avatarUrl: i.fromUser.avatarUrl,
+        poem: i.fromUser.poem,
+        receivedAt: i.createdAt,
+      });
+    }
+  }
+
+  // SIGNALS: ephemeral; populated by your location engine (in-memory)
+  const signals = []; // TODO: call location service / memory map
+
+  return res.status(200).json(
+    new ApiResponse(200, { signals, likes, resonance }, "Signals fetched successfully")
+  );
+});
+
+export { submitAnswersAndGenerateProfile, homePageContent, notificationsPanel };
