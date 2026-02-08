@@ -5,8 +5,9 @@
   "main": "index.js",
   "scripts": {
     "dev": "nodemon src/index.js",
-    "build": "npm i && npx prisma generate && babel src --out-dir dist --copy-files && cp -r ./generated dist/generated",
-    "start": "node dist/index.js"
+    "build": " npm i ",
+      "postinstall": "prisma generate",
+    "start": "node src/index.js"
   },
   "keywords": [],
   "author": "",
