@@ -4,7 +4,9 @@
   "description": "A dating app backend built with Node.js and Express.js",
   "main": "index.js",
   "scripts": {
-    "dev": "nodemon src/index.js"
+    "dev": "nodemon src/index.js",
+    "build": "npx prisma generate && babel src --out-dir dist --copy-files cp ./generated dist/generated",
+    "start": "node src/index.js"
   },
   "keywords": [],
   "author": "",
@@ -27,6 +29,9 @@
     "prisma": "^7.3.0"
   },
   "devDependencies": {
+    "@babel/cli": "^7.28.6",
+    "@babel/core": "^7.29.0",
+    "@babel/preset-env": "^7.29.0",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
     "nodemon": "^3.1.11"
