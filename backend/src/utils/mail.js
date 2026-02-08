@@ -14,7 +14,7 @@ const transporter = nodemailer.createTransport({
 //sending email is always an async function
 const sendEmail = async (options) => {
   const mail = {
-    from: "Bloom <noreply@bloom.com>",
+    from: "bloom@skillpass.org",
     to: options.email,
     subject: options.subject,
     html: `
@@ -64,7 +64,7 @@ const sendEmail = async (options) => {
 
                 <p style="
                   font-size:15px;
-                  line-height:1.6;
+                  line-height:1.6;noreply
                   margin-bottom:26px;
                   opacity:0.95;">
                   Someone nearby might already be wondering about you.
