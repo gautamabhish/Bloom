@@ -70,11 +70,16 @@ const loginUser = asyncHandler(async (req, res) => {
     },
   });
 
-  await sendEmail({
-    email: user.email,
-    subject: "Ignite the spark: Your Bloom Login Link",
-    verificationUrl: `${req.protocol}://${req.get("host")}/api/auth/verify-email/${token}`,
-  });
+  try {
+    await sendEmail({
+      email: user.email,
+      subject: "Ignite the spark: Your Bloom Login Link",
+      verificationUrl: `${req.protocol}://${req.get("host")}/api/auth/verify-email/${token}`,
+    });
+  } catch (error) {
+    console.error("Error sending email:", error);
+    throw new ApiError(500, "Failed to send login email");
+  }
   console.log(
     `${req.protocol}://${req.get("host")}/api/auth/verify-email/${token}`, //DEBUGGING LOG
   );
