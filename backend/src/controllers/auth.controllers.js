@@ -29,7 +29,7 @@ const generateJWT = (user) => {
   return jwt.sign(
     {
       id: user.id,
-        },
+    },
     process.env.JWT_SECRET,
     { expiresIn: "7d" },
   );
@@ -72,7 +72,7 @@ const loginUser = asyncHandler(async (req, res) => {
 
   await sendEmail({
     email: user.email,
-    subject: "Ignite the spark: Your Blush Login Link",
+    subject: "Ignite the spark: Your Bloom Login Link",
     verificationUrl: `${req.protocol}://${req.get("host")}/api/auth/verify-email/${token}`,
   });
   console.log(
