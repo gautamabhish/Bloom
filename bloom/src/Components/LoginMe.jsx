@@ -8,9 +8,9 @@ const LoginMe = () => {
 
   useEffect(() => {
     if (!loading) {
-      if (user.onboardingCompleted) {
+      if (user && user.onboardingCompleted) {
         navigate("/app");
-      } else if(user.verified && !user.onboardingCompleted) {
+      } else if(user && user.verified && !user.onboardingCompleted) {
         navigate("/generate-profile");
       }
       else {
